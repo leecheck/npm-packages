@@ -22,10 +22,18 @@ export default class WS {
         if (!this.socket) {
             console.log('建立websocket连接')
             this.socket = new WebSocket(this.wsurl)
-            this.socket.onopen = this.onopenWS
-            this.socket.onmessage = this.onmessageWS
-            this.socket.onerror = this.onerrorWS
-            this.socket.onclose = this.oncloseWS
+            this.socket.onopen = ()=>{
+                this.onopenWS()
+            } 
+            this.socket.onmessage = (msg)=>{
+                this.onmessageWS(msg)
+            }
+            this.socket.onerror = ()=>{
+                this.onerrorWS()
+            } 
+            this.socket.onclose = ()=>{
+                this.oncloseWS()
+            } 
         } else {
             console.log('websocket已连接')
         }
@@ -50,17 +58,17 @@ export default class WS {
     /**WS数据接收统一处理 */
     onmessageWS(e) {
         this.onMsg(e)
-        this.handleEventOut(JSON.parse(e))
+        this.handleEventOut(JSON.parse(e.data))
     }
 
     /**
      * 发送数据但连接未建立时进行处理等待重发
      * @param {any} message 需要发送的数据
      */
-    connecting(message0){
+    connecting(message){
         setTimeout(() => {
             if (this.socket.readyState === 0) {
-                connecting(message)
+                this.connecting(message)
             } else {
                 this.socket.send(message)
             }
@@ -131,6 +139,7 @@ export default class WS {
         delete this.listener[listenKey]
     }
 
+
     closeSocket() {
         if (this.socket)
             this.socket.close()
@@ -141,18 +150,24 @@ export default class WS {
     }
 
     handleEventOut(data) {
+        let that = this;
         if (!data.success) {
             console.log('ws error:' + JSON.stringify(data))
         } else {
             let msgType = data.type;
-            Object.keys(listener).forEach(function(key) {
-                let msgs = listener[key]['msgs'];
-                let callback = listener[key]['callback'];
-                if (msgs.indexOf(msgType) > -1) {
-                    typeof callback == 'function' && callback(data.data)
+            Object.keys(that.listener).forEach(function(key) {
+                let msgs = that.listener[key]['msgs'];
+                let callback = that.listener[key]['callback'];
+                if (msgs.indexOf(msgType) > -1 || msgs == "all") {
+                    typeof callback == 'function' && callback(data.data,msgType)
                 }
             });
         }
+    }
+
+    close(){
+        this.socket && this.socket.close();
+        this.socket = null;
     }
 
 }
