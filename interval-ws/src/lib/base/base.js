@@ -99,6 +99,22 @@ export default class WS {
         }
     }
 
+    /**
+     * 发送原始数据
+     * @param {*} msg object
+     */
+    sendMsg(msg){
+        let message = JSON.stringify(msg);
+        if (this.socket !== null && this.socket.readyState === 3) {
+            this.socket.close()
+            this.createSocket()
+        } else if (this.socket.readyState === 1) {
+            this.socket.send(message)
+        } else if (this.socket.readyState === 0) {
+            this.connecting(message)
+        }
+    }
+
     /**断开重连 */
     oncloseWS(){
         clearInterval(this.setIntervalWesocketPush)
