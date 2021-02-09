@@ -1,4 +1,3 @@
-
 export default class WS {
 
     constructor(wsurl) {
@@ -22,18 +21,18 @@ export default class WS {
         if (!this.socket) {
             console.log('建立websocket连接')
             this.socket = new WebSocket(this.wsurl)
-            this.socket.onopen = ()=>{
+            this.socket.onopen = () => {
                 this.onopenWS()
-            } 
-            this.socket.onmessage = (msg)=>{
+            }
+            this.socket.onmessage = (msg) => {
                 this.onmessageWS(msg)
             }
-            this.socket.onerror = ()=>{
+            this.socket.onerror = () => {
                 this.onerrorWS()
-            } 
-            this.socket.onclose = ()=>{
+            }
+            this.socket.onclose = () => {
                 this.oncloseWS()
-            } 
+            }
         } else {
             console.log('websocket已连接')
         }
@@ -45,7 +44,7 @@ export default class WS {
     }
 
     /**连接失败重连 */
-    onerrorWS(){
+    onerrorWS() {
         this.socket.close()
         clearInterval(this.setIntervalWesocketPush)
         console.log('连接失败重连中')
@@ -65,7 +64,7 @@ export default class WS {
      * 发送数据但连接未建立时进行处理等待重发
      * @param {any} message 需要发送的数据
      */
-    connecting(message){
+    connecting(message) {
         setTimeout(() => {
             if (this.socket.readyState === 0) {
                 this.connecting(message)
@@ -87,7 +86,7 @@ export default class WS {
      * 发送数据
      * @param {any} message 需要发送的数据
      */
-    sendWSPush(key, data){
+    sendWSPush(key, data) {
         let message = this.buildMsg(key, data);
         if (this.socket !== null && this.socket.readyState === 3) {
             this.socket.close()
@@ -103,7 +102,7 @@ export default class WS {
      * 发送原始数据
      * @param {*} msg object
      */
-    sendMsg(msg){
+    sendMsg(msg) {
         let message = JSON.stringify(msg);
         if (this.socket !== null && this.socket.readyState === 3) {
             this.socket.close()
@@ -116,7 +115,7 @@ export default class WS {
     }
 
     /**断开重连 */
-    oncloseWS(){
+    oncloseWS() {
         clearInterval(this.setIntervalWesocketPush)
         console.log('websocket已断开....正在尝试重连')
         if (this.socket.readyState !== 2) {
@@ -129,7 +128,7 @@ export default class WS {
      * @param {number} time 心跳间隔毫秒 默认5000
      * @param {string} ping 心跳名称 默认字符串ping
      */
-    sendPing(time = 5000){
+    sendPing(time = 5000) {
         clearInterval(this.setIntervalWesocketPush)
         this.sendWSPush("ping", "")
         this.setIntervalWesocketPush = setInterval(() => {
@@ -144,7 +143,7 @@ export default class WS {
      * msgKeyArray ： ["","",""] 注册需要处理的消息类型
      * callback 注册回调
      */
-    listen(listenKey, msgKeyArray, callback){
+    listen(listenKey, msgKeyArray, callback) {
         this.listener[listenKey] = {
             msgs: msgKeyArray,
             callback: callback
@@ -161,7 +160,7 @@ export default class WS {
             this.socket.close()
     }
 
-    onMsg (msg){
+    onMsg(msg) {
 
     }
 
@@ -169,19 +168,18 @@ export default class WS {
         let that = this;
         if (!data.success) {
             console.log('ws error:' + JSON.stringify(data))
-        } else {
-            let msgType = data.type;
-            Object.keys(that.listener).forEach(function(key) {
-                let msgs = that.listener[key]['msgs'];
-                let callback = that.listener[key]['callback'];
-                if (msgs.indexOf(msgType) > -1 || msgs == "all") {
-                    typeof callback == 'function' && callback(data.data,msgType)
-                }
-            });
         }
+        let msgType = data.type || "error";
+        Object.keys(that.listener).forEach(function(key) {
+            let msgs = that.listener[key]['msgs'];
+            let callback = that.listener[key]['callback'];
+            if (msgs.indexOf(msgType) > -1 || msgs == "all") {
+                typeof callback == 'function' && callback(data.data, msgType)
+            }
+        });
     }
 
-    close(){
+    close() {
         this.socket && this.socket.close();
         this.socket = null;
     }
