@@ -6,6 +6,7 @@ export default class WS {
             return;
         }
         this.wsurl = wsurl;
+        this.closed = false;//主动关闭
         this.setIntervalWesocketPush = null;
         this.listener = {};
         this.socket = null;
@@ -117,10 +118,12 @@ export default class WS {
     /**断开重连 */
     oncloseWS() {
         clearInterval(this.setIntervalWesocketPush)
-        console.log('websocket已断开....正在尝试重连')
-        if (this.socket.readyState !== 2) {
-            this.socket = null
-            this.createSocket()
+        if(!this.closed){
+            console.log('websocket已断开....正在尝试重连')
+            if (this.socket.readyState !== 2) {
+                this.socket = null
+                this.createSocket()
+            }
         }
     }
 
@@ -154,12 +157,6 @@ export default class WS {
         delete this.listener[listenKey]
     }
 
-
-    closeSocket() {
-        if (this.socket)
-            this.socket.close()
-    }
-
     onMsg(msg) {
 
     }
@@ -180,6 +177,7 @@ export default class WS {
     }
 
     close() {
+        this.closed = true;
         this.socket && this.socket.close();
         this.socket = null;
     }
